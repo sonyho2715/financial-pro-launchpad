@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id         String   @id @default(cuid())
+  email      String
+  phone      String?
+  source     String   // 'income_calculator' | 'recruiting_mill_quiz'
+  resultData Json?    // Store calculator inputs/outputs or quiz score
+  createdAt  DateTime @default(now())
+
+  @@index([source])
+  @@index([createdAt])
+  @@index([email])
+}
