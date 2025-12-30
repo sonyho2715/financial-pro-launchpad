@@ -1,258 +1,266 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Calculator, TrendingUp, DollarSign, Users, Phone, Target } from 'lucide-react';
-import {
-  calculateIncome,
-  DEFAULT_INPUTS,
-  PRODUCT_LABELS,
-  type ProductType,
-  type IncomeInputs,
-  type IncomeResults,
-} from '@/lib/calculations';
+import { useState, useMemo } from 'react';
+import { Calculator, TrendingUp, DollarSign, Target, ArrowRight, Info } from 'lucide-react';
+import { calculateIncome, type IncomeInputs, type IncomeResults, type ProductType } from '@/lib/calculations';
 
 interface IncomeCalculatorProps {
   onComplete?: (results: IncomeResults, inputs: IncomeInputs) => void;
 }
 
+const PRODUCTS: { value: ProductType; label: string; description: string }[] = [
+  { value: 'term_life', label: 'Term Life', description: 'High volume, steady commissions' },
+  { value: 'permanent_life', label: 'Permanent Life', description: 'Higher premiums, larger cases' },
+  { value: 'annuity', label: 'Annuity', description: 'Investment-focused clients' },
+  { value: 'medicare', label: 'Medicare', description: 'Flat fee per policy' },
+];
+
 export default function IncomeCalculator({ onComplete }: IncomeCalculatorProps) {
-  const [productType, setProductType] = useState<ProductType>('term_life');
   const [inputs, setInputs] = useState<IncomeInputs>({
     productType: 'term_life',
-    ...DEFAULT_INPUTS.term_life,
+    callsPerWeek: 25,
+    appointmentRate: 30,
+    closeRate: 35,
+    avgPremium: 1200,
   });
-  const [results, setResults] = useState<IncomeResults | null>(null);
 
-  // Update inputs when product type changes
-  useEffect(() => {
-    const newInputs = {
-      productType,
-      ...DEFAULT_INPUTS[productType],
-    };
-    setInputs(newInputs);
-  }, [productType]);
+  const results = useMemo(() => calculateIncome(inputs), [inputs]);
 
-  // Calculate results whenever inputs change
-  useEffect(() => {
-    const newResults = calculateIncome(inputs);
-    setResults(newResults);
-  }, [inputs]);
-
-  const handleInputChange = (field: keyof IncomeInputs, value: number) => {
-    setInputs(prev => ({ ...prev, [field]: value }));
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(value);
   };
 
   const handleGetReport = () => {
-    if (results && onComplete) {
+    if (onComplete) {
       onComplete(results, inputs);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Calculator className="w-8 h-8" />
-          <h2 className="text-2xl font-bold">Insurance Income Calculator</h2>
+      <div className="px-8 py-6 border-b border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <Calculator className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Income Calculator</h2>
+            <p className="text-gray-500">Based on real commission rates</p>
+          </div>
         </div>
-        <p className="text-blue-100">See realistic income based on your activity level</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-0">
-        {/* Left Column - Inputs */}
-        <div className="p-6 border-r border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-600" />
-            Your Activity
-          </h3>
-
+      <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
+        {/* Inputs Column */}
+        <div className="p-8 space-y-8">
           {/* Product Type */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-4">
               Product Focus
             </label>
-            <select
-              value={productType}
-              onChange={(e) => setProductType(e.target.value as ProductType)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            >
-              {Object.entries(PRODUCT_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+            <div className="grid grid-cols-2 gap-3">
+              {PRODUCTS.map((product) => (
+                <button
+                  key={product.value}
+                  onClick={() => setInputs({ ...inputs, productType: product.value })}
+                  className={`p-4 rounded-2xl text-left transition-all duration-300 ${
+                    inputs.productType === product.value
+                      ? 'bg-gray-900 text-white shadow-xl shadow-gray-900/20 scale-[1.02]'
+                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md'
+                  }`}
+                >
+                  <div className="font-medium">{product.label}</div>
+                  <div className={`text-xs mt-1 ${
+                    inputs.productType === product.value ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {product.description}
+                  </div>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           {/* Calls Per Week */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Phone className="w-4 h-4 inline mr-1" />
-              Prospecting Calls Per Week: <span className="text-blue-600 font-bold">{inputs.callsPerWeek}</span>
-            </label>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-medium text-gray-900">
+                Calls per Week
+              </label>
+              <span className="text-3xl font-semibold text-gray-900 tabular-nums">{inputs.callsPerWeek}</span>
+            </div>
             <input
               type="range"
               min="10"
               max="100"
               value={inputs.callsPerWeek}
-              onChange={(e) => handleInputChange('callsPerWeek', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              onChange={(e) => setInputs({ ...inputs, callsPerWeek: Number(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
               <span>10</span>
               <span>100</span>
             </div>
           </div>
 
           {/* Appointment Rate */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Users className="w-4 h-4 inline mr-1" />
-              Appointment Rate: <span className="text-blue-600 font-bold">{inputs.appointmentRate}%</span>
-            </label>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-medium text-gray-900">
+                Appointment Rate
+              </label>
+              <span className="text-3xl font-semibold text-gray-900 tabular-nums">{inputs.appointmentRate}%</span>
+            </div>
             <input
               type="range"
-              min="5"
+              min="10"
               max="50"
               value={inputs.appointmentRate}
-              onChange={(e) => handleInputChange('appointmentRate', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              onChange={(e) => setInputs({ ...inputs, appointmentRate: Number(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>5%</span>
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>10%</span>
               <span>50%</span>
             </div>
           </div>
 
           {/* Close Rate */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Target className="w-4 h-4 inline mr-1" />
-              Close Rate: <span className="text-blue-600 font-bold">{inputs.closeRate}%</span>
-            </label>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-medium text-gray-900">
+                Close Rate
+              </label>
+              <span className="text-3xl font-semibold text-gray-900 tabular-nums">{inputs.closeRate}%</span>
+            </div>
             <input
               type="range"
-              min="10"
-              max="70"
+              min="15"
+              max="60"
               value={inputs.closeRate}
-              onChange={(e) => handleInputChange('closeRate', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              onChange={(e) => setInputs({ ...inputs, closeRate: Number(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>10%</span>
-              <span>70%</span>
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>15%</span>
+              <span>60%</span>
             </div>
           </div>
 
-          {/* Average Premium (not for Medicare) */}
-          {productType !== 'medicare' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <DollarSign className="w-4 h-4 inline mr-1" />
-                Avg {productType === 'annuity' ? 'Deposit' : 'Annual Premium'}: <span className="text-blue-600 font-bold">{formatCurrency(inputs.avgPremium)}</span>
-              </label>
+          {/* Average Premium */}
+          {inputs.productType !== 'medicare' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <label className="text-sm font-medium text-gray-900">
+                  Average Annual Premium
+                </label>
+                <span className="text-3xl font-semibold text-gray-900 tabular-nums">{formatCurrency(inputs.avgPremium)}</span>
+              </div>
               <input
                 type="range"
-                min={productType === 'annuity' ? 10000 : 600}
-                max={productType === 'annuity' ? 200000 : 12000}
-                step={productType === 'annuity' ? 5000 : 100}
+                min="500"
+                max="10000"
+                step="100"
                 value={inputs.avgPremium}
-                onChange={(e) => handleInputChange('avgPremium', Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                onChange={(e) => setInputs({ ...inputs, avgPremium: Number(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>{formatCurrency(productType === 'annuity' ? 10000 : 600)}</span>
-                <span>{formatCurrency(productType === 'annuity' ? 200000 : 12000)}</span>
+              <div className="flex justify-between text-xs text-gray-400 mt-2">
+                <span>$500</span>
+                <span>$10,000</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Column - Results */}
-        <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50">
-          <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-600" />
+        {/* Results Column */}
+        <div className="p-8 bg-gray-50/50">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">
             Your Projected Income
           </h3>
 
-          {results && (
-            <>
-              {/* Activity Summary */}
-              <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
-                <p className="text-sm text-gray-600 mb-2">Monthly Activity</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {results.monthlyPolicies} policies/month
-                </p>
-                <p className="text-sm text-gray-500">
-                  {results.policiesPerYear} policies/year
-                </p>
-              </div>
+          {/* Primary Result */}
+          <div className="bg-white rounded-3xl p-8 mb-6 border border-gray-100 shadow-sm">
+            <div className="text-sm text-gray-500 mb-3">Year 1 Annual Income</div>
+            <div className="text-5xl md:text-6xl font-semibold text-gray-900 mb-2 tracking-tight">
+              {formatCurrency(results.annualTotal)}
+            </div>
+            <div className="text-lg text-gray-500">
+              {formatCurrency(results.monthlyTotal)} / month
+            </div>
+          </div>
 
-              {/* Income Display */}
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-6 mb-4 text-white shadow-lg">
-                <p className="text-sm text-green-100 mb-1">Year 1 Monthly Income</p>
-                <p className="text-4xl font-bold mb-2">
-                  {formatCurrency(results.monthlyTotal)}
-                </p>
-                <p className="text-sm text-green-100">
-                  First-year commission: {formatCurrency(results.monthlyFYC)}/mo
-                </p>
+          {/* Breakdown */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100">
+              <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                <DollarSign className="w-4 h-4" />
+                First Year Commission
               </div>
-
-              {/* Projections */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-500 mb-1">Year 1 Total</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {formatCurrency(results.annualTotal)}
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <p className="text-xs text-gray-500 mb-1">Year 3 (w/ renewals)</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {formatCurrency(results.year3Projection)}
-                  </p>
-                </div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {formatCurrency(results.monthlyFYC)}
               </div>
-
-              <div className="bg-blue-100 rounded-lg p-4 mb-6">
-                <p className="text-xs text-blue-800 mb-1">Year 5 Projection</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {formatCurrency(results.year5Projection)}
-                </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  With compounding renewals from client retention
-                </p>
+              <div className="text-sm text-gray-400">per month</div>
+            </div>
+            <div className="bg-white rounded-2xl p-5 border border-gray-100">
+              <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                <TrendingUp className="w-4 h-4" />
+                Renewals
               </div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {formatCurrency(results.monthlyRenewals)}
+              </div>
+              <div className="text-sm text-gray-400">per month</div>
+            </div>
+          </div>
 
-              {/* CTA Button */}
-              <button
-                onClick={handleGetReport}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg"
-              >
-                Get Your Full Report
-              </button>
-              <p className="text-xs text-gray-500 text-center mt-2">
-                Includes action steps to hit these numbers
-              </p>
-            </>
-          )}
+          {/* Future Projections */}
+          <div className="bg-gray-900 rounded-3xl p-6 text-white mb-6">
+            <div className="flex items-center gap-2 text-gray-400 text-sm mb-5">
+              <Target className="w-4 h-4" />
+              Growth Projections
+            </div>
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Year 3</div>
+                <div className="text-3xl md:text-4xl font-semibold tracking-tight">{formatCurrency(results.year3Projection)}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Year 5</div>
+                <div className="text-3xl md:text-4xl font-semibold tracking-tight">{formatCurrency(results.year5Projection)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Activity Summary */}
+          <div className="bg-blue-50 rounded-2xl p-5 mb-6">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <strong>Your Activity:</strong> {inputs.callsPerWeek} calls/week → {Math.round(inputs.callsPerWeek * (inputs.appointmentRate / 100))} appointments → {Math.round(inputs.callsPerWeek * (inputs.appointmentRate / 100) * (inputs.closeRate / 100))} sales/week
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <button
+            onClick={handleGetReport}
+            className="w-full bg-gray-900 text-white py-4 px-6 rounded-full font-medium hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20"
+          >
+            Get Your Full Report
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </div>
 
       {/* Footer Note */}
-      <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+      <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50">
         <p className="text-xs text-gray-500 text-center">
           Based on industry-average commission rates. Actual results vary by carrier, state, and individual performance.
-          This calculator assumes you're keeping 100% of your commission (no splits to upline).
         </p>
       </div>
     </div>

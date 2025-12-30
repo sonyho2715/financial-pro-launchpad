@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ClipboardCheck, AlertTriangle, CheckCircle, XCircle, ArrowRight, RotateCcw } from 'lucide-react';
+import { ClipboardCheck, AlertTriangle, CheckCircle, XCircle, ArrowRight, RotateCcw, Shield, AlertOctagon } from 'lucide-react';
 import { QUIZ_QUESTIONS, getQuizResult, type QuizResult } from '@/lib/quiz-data';
 
 interface RecruitingMillQuizProps {
@@ -24,7 +24,6 @@ export default function RecruitingMillQuiz({ onComplete }: RecruitingMillQuizPro
     if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // Calculate final result
       const totalScore = newAnswers.reduce((sum, s) => sum + s, 0);
       const quizResult = getQuizResult(totalScore);
       setResult(quizResult);
@@ -45,108 +44,142 @@ export default function RecruitingMillQuiz({ onComplete }: RecruitingMillQuizPro
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'professional':
-        return <CheckCircle className="w-16 h-16 text-green-500" />;
+        return <Shield className="w-20 h-20 text-emerald-500" />;
       case 'mixed':
-        return <AlertTriangle className="w-16 h-16 text-yellow-500" />;
+        return <AlertTriangle className="w-20 h-20 text-amber-500" />;
       case 'warning':
-        return <AlertTriangle className="w-16 h-16 text-orange-500" />;
+        return <AlertOctagon className="w-20 h-20 text-orange-500" />;
       case 'recruiting_mill':
-        return <XCircle className="w-16 h-16 text-red-500" />;
+        return <XCircle className="w-20 h-20 text-red-500" />;
       default:
         return null;
     }
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryStyles = (category: string) => {
     switch (category) {
       case 'professional':
-        return 'from-green-500 to-emerald-600';
+        return {
+          bg: 'bg-emerald-50',
+          border: 'border-emerald-200',
+          text: 'text-emerald-900',
+          accent: 'text-emerald-600',
+          badge: 'bg-emerald-100 text-emerald-700'
+        };
       case 'mixed':
-        return 'from-yellow-500 to-amber-600';
+        return {
+          bg: 'bg-amber-50',
+          border: 'border-amber-200',
+          text: 'text-amber-900',
+          accent: 'text-amber-600',
+          badge: 'bg-amber-100 text-amber-700'
+        };
       case 'warning':
-        return 'from-orange-500 to-red-500';
+        return {
+          bg: 'bg-orange-50',
+          border: 'border-orange-200',
+          text: 'text-orange-900',
+          accent: 'text-orange-600',
+          badge: 'bg-orange-100 text-orange-700'
+        };
       case 'recruiting_mill':
-        return 'from-red-600 to-red-800';
+        return {
+          bg: 'bg-red-50',
+          border: 'border-red-200',
+          text: 'text-red-900',
+          accent: 'text-red-600',
+          badge: 'bg-red-100 text-red-700'
+        };
       default:
-        return 'from-gray-500 to-gray-600';
+        return {
+          bg: 'bg-gray-50',
+          border: 'border-gray-200',
+          text: 'text-gray-900',
+          accent: 'text-gray-600',
+          badge: 'bg-gray-100 text-gray-700'
+        };
     }
   };
 
   if (showResults && result) {
+    const styles = getCategoryStyles(result.category);
+
     return (
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Results Header */}
-        <div className={`bg-gradient-to-r ${getCategoryColor(result.category)} px-6 py-8 text-white text-center`}>
-          <div className="flex justify-center mb-4">
+        <div className={`${styles.bg} px-8 py-12 text-center border-b ${styles.border}`}>
+          <div className="flex justify-center mb-6">
             {getCategoryIcon(result.category)}
           </div>
-          <h2 className="text-2xl font-bold mb-2">{result.title}</h2>
-          <p className="text-white/90">
+          <div className={`inline-flex items-center gap-2 ${styles.badge} px-4 py-2 rounded-full text-sm font-medium mb-4`}>
             Score: {result.score} / {result.maxScore}
-          </p>
+          </div>
+          <h2 className={`text-3xl md:text-4xl font-semibold ${styles.text}`}>{result.title}</h2>
         </div>
 
         {/* Results Content */}
-        <div className="p-6">
-          {/* Score Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Professional</span>
+        <div className="p-8">
+          {/* Score Visualization */}
+          <div className="mb-8">
+            <div className="flex justify-between text-sm text-gray-500 mb-3">
+              <span>Professional Practice</span>
               <span>Recruiting Mill</span>
             </div>
-            <div className="h-4 bg-gradient-to-r from-green-200 via-yellow-200 via-orange-200 to-red-200 rounded-full overflow-hidden">
+            <div className="relative h-3 bg-gradient-to-r from-emerald-200 via-amber-200 via-orange-200 to-red-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gray-800 rounded-full transition-all duration-500"
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-gray-900 rounded-full shadow-lg transition-all duration-500"
                 style={{
-                  width: '8px',
-                  marginLeft: `calc(${(result.score / result.maxScore) * 100}% - 4px)`
+                  left: `calc(${(result.score / result.maxScore) * 100}% - 8px)`
                 }}
               />
             </div>
           </div>
 
           {/* Description */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-gray-700">{result.description}</p>
+          <div className="bg-gray-50 rounded-2xl p-6 mb-8">
+            <p className="text-gray-700 text-lg leading-relaxed">{result.description}</p>
           </div>
 
           {/* Recommendations */}
-          <div className="mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3">What You Should Do:</h3>
-            <ul className="space-y-2">
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">What You Should Do</h3>
+            <div className="space-y-3">
               {result.recommendations.map((rec, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <ArrowRight className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{rec}</span>
-                </li>
+                <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium">
+                    {index + 1}
+                  </div>
+                  <span className="text-gray-700 pt-1">{rec}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
           {/* Book Promo */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-blue-800 font-medium mb-2">
+          <div className="bg-gray-900 text-white rounded-2xl p-6 mb-8">
+            <p className="font-medium mb-2 text-lg">
               Want the complete roadmap?
             </p>
-            <p className="text-blue-700 text-sm">
+            <p className="text-gray-400">
               "The Hawaii Financial Professional's Blueprint" by Sony Ho shows you exactly how to build a client-focused practice that works for YOU, not your upline.
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <button
               onClick={handleRetake}
-              className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg transition"
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-4 px-6 rounded-full transition-all"
             >
               <RotateCcw className="w-5 h-5" />
               Retake Quiz
             </button>
             <button
               onClick={() => onComplete?.(result)}
-              className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105"
+              className="flex-1 bg-gray-900 text-white font-medium py-4 px-6 rounded-full hover:bg-gray-800 transition-all flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20"
             >
               Get Free Resources
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
@@ -155,35 +188,39 @@ export default function RecruitingMillQuiz({ onComplete }: RecruitingMillQuizPro
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 px-6 py-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <ClipboardCheck className="w-7 h-7" />
-          <h2 className="text-xl font-bold">Am I In a Recruiting Mill?</h2>
+      <div className="px-8 py-6 border-b border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/25">
+            <ClipboardCheck className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Recruiting Mill Quiz</h2>
+            <p className="text-gray-500">Honest assessment of your organization</p>
+          </div>
         </div>
-        <p className="text-purple-100 text-sm">Honest assessment of your current organization</p>
       </div>
 
       {/* Progress Bar */}
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-2">
+      <div className="px-8 py-6 bg-gray-50/50 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-600">
             Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
           </span>
-          <span className="text-sm text-gray-500">{Math.round(progress)}%</span>
+          <span className="text-sm font-medium text-gray-900">{Math.round(progress)}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300"
+            className="h-full bg-gray-900 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
       {/* Question */}
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6">
+      <div className="p-8">
+        <h3 className="text-2xl font-semibold text-gray-900 mb-8 leading-tight">
           {question.question}
         </h3>
 
@@ -193,12 +230,12 @@ export default function RecruitingMillQuiz({ onComplete }: RecruitingMillQuizPro
             <button
               key={index}
               onClick={() => handleAnswer(answer.score)}
-              className="w-full flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all text-left group"
+              className="w-full flex items-center gap-4 p-5 bg-gray-50 rounded-2xl hover:bg-gray-100 hover:shadow-md transition-all duration-200 text-left group"
             >
-              <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-purple-200 rounded-full font-semibold text-gray-600 group-hover:text-purple-700 transition">
+              <span className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-white group-hover:bg-gray-900 group-hover:text-white rounded-xl font-semibold text-gray-600 transition-all duration-200 shadow-sm">
                 {String.fromCharCode(65 + index)}
               </span>
-              <span className="text-gray-700 group-hover:text-gray-900">
+              <span className="text-gray-700 group-hover:text-gray-900 font-medium">
                 {answer.text}
               </span>
             </button>
@@ -207,7 +244,7 @@ export default function RecruitingMillQuiz({ onComplete }: RecruitingMillQuizPro
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+      <div className="px-8 py-5 bg-gray-50/50 border-t border-gray-100">
         <p className="text-xs text-gray-500 text-center">
           Your answers are anonymous and not stored until you choose to get your results.
         </p>
