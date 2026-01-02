@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   Calculator, ClipboardCheck, BookOpen, ArrowRight, CheckCircle, ChevronDown,
   Users, TrendingUp, Shield, Target, Zap, Award, MessageCircle, HelpCircle,
-  ChevronRight, AlertTriangle, Star, Clock, DollarSign, Heart, MapPin
+  ChevronRight, AlertTriangle, Star, Clock, DollarSign, Heart, MapPin, Menu, X
 } from 'lucide-react';
 import IncomeCalculator from '@/components/IncomeCalculator';
 import RecruitingMillQuiz from '@/components/RecruitingMillQuiz';
@@ -79,6 +80,7 @@ export default function Home() {
   const [modalSource, setModalSource] = useState<'income_calculator' | 'recruiting_mill_quiz'>('income_calculator');
   const [resultData, setResultData] = useState<Record<string, unknown>>({});
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleCalculatorComplete = (results: IncomeResults, inputs: IncomeInputs) => {
     setModalSource('income_calculator');
@@ -99,10 +101,10 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center" aria-hidden="true">
               <span className="text-white font-bold text-sm">FP</span>
             </div>
             <span className="font-semibold text-gray-900">Financial Pro</span>
@@ -114,22 +116,55 @@ export default function Home() {
             <a href="#about" className="text-gray-600 hover:text-gray-900 transition">About</a>
             <a href="#faq" className="text-gray-600 hover:text-gray-900 transition">FAQ</a>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+
           <button
             onClick={scrollToTools}
-            className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition"
+            className="hidden md:block bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition"
           >
             Get Started
           </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-100 shadow-lg">
+            <div className="px-6 py-4 space-y-3">
+              <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-gray-900 transition py-2">Tools</a>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-gray-900 transition py-2">How It Works</a>
+              <a href="#book" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-gray-900 transition py-2">Book</a>
+              <a href="#about" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-gray-900 transition py-2">About</a>
+              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-gray-900 transition py-2">FAQ</a>
+              <button
+                onClick={() => { scrollToTools(); setMobileMenuOpen(false); }}
+                className="w-full bg-gray-900 text-white px-5 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition mt-2"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=2400&q=80"
             alt="Professional business setting"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white" />
         </div>
@@ -190,8 +225,9 @@ export default function Home() {
         <button
           onClick={scrollToTools}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-gray-400 hover:text-gray-600 transition animate-bounce"
+          aria-label="Scroll to tools section"
         >
-          <ChevronDown className="w-8 h-8" />
+          <ChevronDown className="w-8 h-8" aria-hidden="true" />
         </button>
       </section>
 
@@ -229,11 +265,15 @@ export default function Home() {
               </div>
             </div>
             <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80"
-                alt="Frustrated professional"
-                className="rounded-3xl shadow-2xl"
-              />
+              <div className="relative aspect-[4/3] rounded-3xl shadow-2xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80"
+                  alt="Frustrated professional"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
               <div className="absolute -bottom-6 -left-6 bg-white text-gray-900 rounded-2xl p-6 shadow-xl max-w-xs">
                 <div className="text-4xl font-bold text-red-600 mb-2">73%</div>
                 <p className="text-sm text-gray-600">of agents leave because they can't make enough money with the recruiting model</p>
@@ -322,10 +362,12 @@ export default function Home() {
                   className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
                 >
                   <div className="aspect-[4/3] relative overflow-hidden">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80"
                       alt="Financial calculations"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
@@ -368,10 +410,12 @@ export default function Home() {
                   className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1"
                 >
                   <div className="aspect-[4/3] relative overflow-hidden">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1551836022-deb4988cc6c0?auto=format&fit=crop&w=1200&q=80"
                       alt="Professional evaluation"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
@@ -507,10 +551,12 @@ export default function Home() {
       {/* Book Section */}
       <section id="book" className="py-32 bg-gray-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=2400&q=80"
             alt="Hawaii landscape"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="100vw"
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/95 to-gray-900/80" />
@@ -589,11 +635,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80"
-                alt="Sony Ho"
-                className="rounded-3xl shadow-2xl"
-              />
+              <div className="relative aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80"
+                  alt="Sony Ho"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
               <div className="absolute -bottom-6 -right-6 bg-blue-600 text-white rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5" />
@@ -695,18 +745,20 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4" role="list" aria-label="Frequently asked questions">
             {FAQ_ITEMS.map((faq, i) => (
-              <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden">
+              <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden" role="listitem">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition"
+                  aria-expanded={openFaq === i}
+                  aria-controls={`faq-answer-${i}`}
                 >
                   <span className="font-medium text-gray-900 pr-4">{faq.question}</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </button>
                 {openFaq === i && (
-                  <div className="px-6 pb-6">
+                  <div id={`faq-answer-${i}`} className="px-6 pb-6">
                     <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
@@ -790,7 +842,7 @@ export default function Home() {
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm">
-              © 2024 Financial Pro Launchpad. All rights reserved.
+              © {new Date().getFullYear()} Financial Pro Launchpad. All rights reserved.
             </p>
             <p className="text-gray-500 text-sm">
               By Sony Ho. Helping Hawaii financial professionals build real practices.
