@@ -22,7 +22,12 @@ export default function PublicResultsPage({ params }: { params: Promise<{ agentC
       router.push(`/b/${agentCode}`);
       return;
     }
-    setData(JSON.parse(stored));
+    try {
+      setData(JSON.parse(stored));
+    } catch {
+      sessionStorage.removeItem('balanceSheetData');
+      router.push(`/b/${agentCode}`);
+    }
   }, [router, agentCode]);
 
   const personalAnalysis = useMemo(() => {

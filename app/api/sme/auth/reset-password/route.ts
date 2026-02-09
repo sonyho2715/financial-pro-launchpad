@@ -7,7 +7,7 @@ import { logAuthEvent, logSecurityEvent } from '@/lib/audit';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').max(72),
 });
 
 export async function POST(request: NextRequest) {

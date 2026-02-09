@@ -160,7 +160,7 @@ export default function BusinessProtectionCard({ summary, businessName }: Busine
               s.cashRunwayStatus === 'warning' ? 'text-yellow-400' :
               'text-green-400'
             }`}>
-              {s.cashRunwayMonths}
+              {s.cashRunwayMonths !== null ? s.cashRunwayMonths : 'N/A'}
             </p>
             <p className="text-xs text-slate-500">months</p>
           </div>

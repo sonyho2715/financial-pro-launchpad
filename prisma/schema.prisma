@@ -60,6 +60,7 @@ model Lead {
   @@index([source])
   @@index([createdAt])
   @@index([email])
+  @@index([email, source])
 }
 
 // ──────────────────────────────────────────────

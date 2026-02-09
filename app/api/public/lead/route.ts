@@ -70,18 +70,18 @@ export async function POST(req: NextRequest) {
         source: `PUBLIC_${validated.source}`,
       });
 
-      // Notify agent (fire-and-forget)
-      notifyAgentOfReferrals({
+      // Notify agent (awaited to ensure delivery)
+      await notifyAgentOfReferrals({
         agentId,
         referrerName: `${validated.firstName} ${validated.lastName || ''}`.trim(),
         referralCount: referrals.length,
         referrals: referrals.map(r => ({ name: r.name, contact: r.contact })),
-      }).catch(console.error);
+      });
     }
 
     // Notify agent of new prospect (if agent found)
     if (agentId) {
-      db.notification.create({
+      await db.notification.create({
         data: {
           agentId,
           type: 'PROSPECT_SUBMITTED',
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           message: `${validated.firstName} ${validated.lastName || ''} submitted a balance sheet analysis.`.trim(),
           metadata: { prospectId: prospect.id, email: validated.email },
         },
-      }).catch(console.error);
+      });
     }
 
     return NextResponse.json({ success: true, prospectId: prospect.id });

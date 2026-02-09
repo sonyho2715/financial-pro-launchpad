@@ -19,7 +19,12 @@ export default function BalanceSheetResultsPage() {
       router.push('/dashboard/balance-sheet');
       return;
     }
-    setData(JSON.parse(stored));
+    try {
+      setData(JSON.parse(stored));
+    } catch {
+      sessionStorage.removeItem('balanceSheetData');
+      router.push('/dashboard/balance-sheet');
+    }
   }, [router]);
 
   const personalAnalysis = useMemo(() => {

@@ -182,7 +182,7 @@ export interface BusinessProtectionSummary {
   buySellNeeded: number;
   buySellCurrent: number;
   buySellFundedPercent: number;
-  cashRunwayMonths: number;
+  cashRunwayMonths: number | null;
   cashRunwayStatus: 'critical' | 'warning' | 'healthy';
   monthlyBurn: number;
 }

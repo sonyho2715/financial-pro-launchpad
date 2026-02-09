@@ -110,12 +110,12 @@ export function calculateBusinessProtectionSummary(data: BalanceSheetData): Busi
   // Cash Runway
   const monthlyBurn = data.monthlyOperatingExpenses ?? ((data.annualExpenses ?? 0) / 12);
   const cashOnHand = data.businessCashOnHand ?? 0;
-  const cashRunwayMonths = monthlyBurn > 0 ? Math.round((cashOnHand / monthlyBurn) * 10) / 10 : 99;
+  const cashRunwayMonths = monthlyBurn > 0 ? Math.round((cashOnHand / monthlyBurn) * 10) / 10 : null;
 
   let cashRunwayStatus: 'critical' | 'warning' | 'healthy';
-  if (cashRunwayMonths < 3) cashRunwayStatus = 'critical';
-  else if (cashRunwayMonths < 6) cashRunwayStatus = 'warning';
-  else cashRunwayStatus = 'healthy';
+  if (cashRunwayMonths === null || cashRunwayMonths >= 6) cashRunwayStatus = 'healthy';
+  else if (cashRunwayMonths < 3) cashRunwayStatus = 'critical';
+  else cashRunwayStatus = 'warning';
 
   return {
     valuationLow,

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { sendReferralNotification } from '@/lib/email';
 
@@ -28,13 +29,15 @@ export async function saveReferrals(params: {
   for (const ref of params.referrals) {
     // Determine if contact is email or phone
     const isEmail = ref.contact.includes('@');
-    const email = isEmail ? ref.contact : `${ref.contact.replace(/\D/g, '')}@placeholder.referral`;
+    const email = isEmail ? ref.contact : `no-email+${crypto.randomUUID()}@internal.invalid`;
     const phone = isEmail ? undefined : ref.contact;
 
     // Auto-create a Prospect for the referral
-    const nameParts = ref.name.split(' ');
-    const firstName = nameParts[0] || ref.name;
-    const lastName = nameParts.slice(1).join(' ') || undefined;
+    const nameParts = ref.name.trim().split(/\s+/);
+    const firstName = (nameParts[0] || ref.name).slice(0, 50).trim();
+    const lastName = nameParts.length > 1
+      ? nameParts.slice(1).join(' ').slice(0, 50).trim()
+      : undefined;
 
     const prospect = await db.prospect.create({
       data: {

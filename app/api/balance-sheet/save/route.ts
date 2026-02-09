@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import crypto from 'crypto';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { extractReferrals, saveReferrals, notifyAgentOfReferrals } from '@/lib/services/referral.service';
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
       const prospect = await db.prospect.create({
         data: {
           agentId: session.userId,
-          email: `${validated.firstName.toLowerCase()}.${Date.now()}@placeholder.fna`,
+          email: `no-email+${crypto.randomUUID()}@internal.invalid`,
           firstName: validated.firstName,
           lastName: validated.lastName || undefined,
           source: 'BALANCE_SHEET',
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
       const businessProspect = await db.businessProspect.create({
         data: {
           agentId: session.userId,
-          email: `${validated.firstName.toLowerCase()}.${Date.now()}@placeholder.fna`,
+          email: `no-email+${crypto.randomUUID()}@internal.invalid`,
           contactName: `${validated.firstName} ${validated.lastName || ''}`.trim(),
           businessName: body.businessName || 'Unnamed Business',
           source: 'BALANCE_SHEET',
@@ -98,13 +99,13 @@ export async function POST(req: NextRequest) {
         source: `BALANCE_SHEET_${validated.formType.toUpperCase()}`,
       });
 
-      // Notify agent (fire-and-forget)
-      notifyAgentOfReferrals({
+      // Notify agent (awaited to ensure delivery)
+      await notifyAgentOfReferrals({
         agentId: session.userId,
         referrerName: `${validated.firstName} ${validated.lastName || ''}`.trim(),
         referralCount: referrals.length,
         referrals: referrals.map(r => ({ name: r.name, contact: r.contact })),
-      }).catch(console.error);
+      });
     }
 
     return NextResponse.json({

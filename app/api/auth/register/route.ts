@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -8,13 +9,22 @@ const registerSchema = z.object({
   firstName: z.string().min(1).max(50),
   lastName: z.string().min(1).max(50),
   email: z.string().email(),
-  password: z.string().min(8).max(100),
+  password: z.string().min(8).max(72),
 });
 
-function generateReferralCode(firstName: string, lastName: string): string {
+async function generateUniqueReferralCode(firstName: string, lastName: string): Promise<string> {
   const base = `${firstName}${lastName}`.toLowerCase().replace(/[^a-z]/g, '').slice(0, 8);
-  const rand = Math.random().toString(36).slice(2, 6);
-  return `${base}-${rand}`;
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const rand = crypto.randomBytes(3).toString('hex');
+    const code = `${base}-${rand}`;
+
+    const existing = await db.agent.findUnique({ where: { referralCode: code } });
+    if (!existing) return code;
+  }
+
+  // Fallback: use full UUID suffix for guaranteed uniqueness
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(validated.password, 12);
-    const referralCode = generateReferralCode(validated.firstName, validated.lastName);
+    const referralCode = await generateUniqueReferralCode(validated.firstName, validated.lastName);
 
     const agent = await db.agent.create({
       data: {
