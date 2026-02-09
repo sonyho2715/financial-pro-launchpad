@@ -67,18 +67,20 @@ model Lead {
 // ──────────────────────────────────────────────
 
 model Agent {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  phone        String?
-  company      String?
-  licenseState String?
-  referralCode String   @unique
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  phone                String?
+  company              String?
+  licenseState         String?
+  referralCode         String    @unique
+  isActive             Boolean   @default(true)
+  resetToken           String?
+  resetTokenExpiresAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   Prospects             Prospect[]
   BusinessProspects     BusinessProspect[]
@@ -154,7 +156,7 @@ model FinancialProfile {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  Prospect Prospect @relation(fields: [prospectId], references: [id])
+  Prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
 }
 
 // ──────────────────────────────────────────────
@@ -169,7 +171,7 @@ model BusinessFinancialProfile {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  BusinessProspect BusinessProspect @relation(fields: [businessProspectId], references: [id])
+  BusinessProspect BusinessProspect @relation(fields: [businessProspectId], references: [id], onDelete: Cascade)
 }
 
 // ──────────────────────────────────────────────
@@ -211,12 +213,34 @@ model BalanceSheetReferral {
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
 
-  Prospect            Prospect?         @relation(fields: [referrerProspectId], references: [id])
-  BusinessProspect    BusinessProspect? @relation(fields: [referrerBusinessId], references: [id])
-  Agent               Agent?            @relation(fields: [agentId], references: [id])
+  Prospect            Prospect?         @relation(fields: [referrerProspectId], references: [id], onDelete: SetNull)
+  BusinessProspect    BusinessProspect? @relation(fields: [referrerBusinessId], references: [id], onDelete: SetNull)
+  Agent               Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)
   AutoCreatedProspect Prospect?         @relation("AutoCreatedReferralProspect", fields: [autoCreatedProspectId], references: [id])
 
   @@index([referrerProspectId])
+  @@index([referrerBusinessId])
   @@index([agentId])
   @@index([status])
+}
+
+// ──────────────────────────────────────────────
+// SMEUser (Subject Matter Expert)
+// ──────────────────────────────────────────────
+
+model SMEUser {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  company              String?
+  isVerified           Boolean   @default(false)
+  isActive             Boolean   @default(true)
+  resetToken           String?
+  resetTokenExpiresAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([email])
 }
