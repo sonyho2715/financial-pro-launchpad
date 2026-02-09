@@ -7,15 +7,216 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ──────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum ProspectStatus {
+  NEW
+  CONTACTED
+  MEETING_SCHEDULED
+  ANALYSIS_SENT
+  FOLLOW_UP
+  CLIENT
+  INACTIVE
+}
+
+enum FormType {
+  PERSONAL
+  BUSINESS
+}
+
+enum ReferralStatus {
+  PENDING
+  CONTACTED
+  CONVERTED
+  DECLINED
+}
+
+enum NotificationType {
+  PROSPECT_SUBMITTED
+  ANALYSIS_VIEWED
+  FOLLOW_UP_DUE
+  REFERRAL_RECEIVED
+}
+
+// ──────────────────────────────────────────────
+// Lead (existing - income calculator / quiz)
+// ──────────────────────────────────────────────
+
 model Lead {
   id         String   @id @default(cuid())
   email      String
   phone      String?
   source     String   // 'income_calculator' | 'recruiting_mill_quiz'
-  resultData Json?    // Store calculator inputs/outputs or quiz score
+  resultData Json?
   createdAt  DateTime @default(now())
 
   @@index([source])
   @@index([createdAt])
   @@index([email])
+}
+
+// ──────────────────────────────────────────────
+// Agent (financial professional using the platform)
+// ──────────────────────────────────────────────
+
+model Agent {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  company      String?
+  licenseState String?
+  referralCode String   @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  Prospects             Prospect[]
+  BusinessProspects     BusinessProspect[]
+  Notifications         Notification[]
+  BalanceSheetReferrals BalanceSheetReferral[]
+
+  @@index([referralCode])
+  @@index([email])
+}
+
+// ──────────────────────────────────────────────
+// Prospect (personal client)
+// ──────────────────────────────────────────────
+
+model Prospect {
+  id        String         @id @default(cuid())
+  agentId   String?
+  email     String
+  phone     String?
+  firstName String
+  lastName  String?
+  status    ProspectStatus @default(NEW)
+  source    String         @default("BALANCE_SHEET")
+  notes     String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  Agent             Agent?             @relation(fields: [agentId], references: [id])
+  FinancialProfile  FinancialProfile?
+  BalanceSheetReferrals  BalanceSheetReferral[]
+  AutoCreatedFromReferral BalanceSheetReferral? @relation("AutoCreatedReferralProspect")
+
+  @@index([agentId])
+  @@index([status])
+  @@index([email])
+}
+
+// ──────────────────────────────────────────────
+// BusinessProspect (business client)
+// ──────────────────────────────────────────────
+
+model BusinessProspect {
+  id           String         @id @default(cuid())
+  agentId      String?
+  email        String
+  phone        String?
+  contactName  String
+  businessName String
+  status       ProspectStatus @default(NEW)
+  source       String         @default("BALANCE_SHEET")
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  Agent                  Agent?                  @relation(fields: [agentId], references: [id])
+  BusinessFinancialProfile BusinessFinancialProfile?
+  BalanceSheetReferrals  BalanceSheetReferral[]
+
+  @@index([agentId])
+  @@index([status])
+  @@index([email])
+}
+
+// ──────────────────────────────────────────────
+// FinancialProfile (personal balance sheet data)
+// ──────────────────────────────────────────────
+
+model FinancialProfile {
+  id         String   @id @default(cuid())
+  prospectId String   @unique
+  formData   Json     // Full balance sheet form data
+  results    Json?    // Calculated results snapshot
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Prospect Prospect @relation(fields: [prospectId], references: [id])
+}
+
+// ──────────────────────────────────────────────
+// BusinessFinancialProfile (business balance sheet)
+// ──────────────────────────────────────────────
+
+model BusinessFinancialProfile {
+  id                 String   @id @default(cuid())
+  businessProspectId String   @unique
+  formData           Json     // Full business form data
+  results            Json?    // Calculated results snapshot
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  BusinessProspect BusinessProspect @relation(fields: [businessProspectId], references: [id])
+}
+
+// ──────────────────────────────────────────────
+// Notification
+// ──────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  agentId   String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  Agent Agent @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ──────────────────────────────────────────────
+// BalanceSheetReferral (Phase 2)
+// ──────────────────────────────────────────────
+
+model BalanceSheetReferral {
+  id                    String         @id @default(cuid())
+  referrerProspectId    String?
+  referrerBusinessId    String?
+  agentId               String?
+  referredName          String
+  referredContact       String
+  status                ReferralStatus @default(PENDING)
+  autoCreatedProspectId String?        @unique
+  slotNumber            Int
+  source                String         @default("BALANCE_SHEET")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  Prospect            Prospect?         @relation(fields: [referrerProspectId], references: [id])
+  BusinessProspect    BusinessProspect? @relation(fields: [referrerBusinessId], references: [id])
+  Agent               Agent?            @relation(fields: [agentId], references: [id])
+  AutoCreatedProspect Prospect?         @relation("AutoCreatedReferralProspect", fields: [autoCreatedProspectId], references: [id])
+
+  @@index([referrerProspectId])
+  @@index([agentId])
+  @@index([status])
 }
